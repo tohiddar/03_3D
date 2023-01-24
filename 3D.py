@@ -16,8 +16,9 @@ class Shape(pygame.sprite.Sprite):
 		temp2=[];temp20=[]
 #		with open('Eiffel_tower_sample.STL', newline='') as file:
 #		with open('humanoid.stl', newline='') as file:
-#		with open('bottle.stl', newline='') as file:
-		with open('cube.stl', newline='') as file:
+		with open('bottle.stl', newline='') as file:
+#		with open('surface.stl', newline='') as file:
+#		with open('cube.stl', newline='') as file:
 #		with open('teapot.stl', newline='') as file:
 			for line in file:
 #				print(line)
@@ -54,42 +55,53 @@ class Shape(pygame.sprite.Sprite):
 
 		self.factor=1
 
-	def calculations_for_aribit(self):
-		self.camposx=10
-		self.camposy=0
-		self.camposz=0
+		### Camera Initial Location
+		self.campos=[100,100,0]
 
-		self.pixelperunit=100
-#		self.camposx=20
-#		self.camposy=20
-#		self.camposz=20
+		### Camera Initial Vector (Could be non_normalized)
+		self.camvect = [-1,-1,0]
+		self.camvect=normalize(self.camvect)
 
-		self.lightx = self.camposx * -1
-		self.lighty = self.camposy * 1
-		self.lightz = self.camposz * 1
+		### Light Source Location
+		self.light = [10,10,10]
 
-		self.camvectx = -1
-		self.camvecty = 0
-		self.camvectz = 0
+		### Tangent of half of the angle of field of view (70 deg = 2.74747741945)
+		self.tangtheta=2.74747741945
 
-		self.cam_localxvector=cross([self.camvectx,self.camvecty,self.camvectz],[0,0,1])
+	def calculations_for_arbit(self):
+		### This vector guarantees that the camera is always looking horizontal.
+		camplane_y = [0, 0, 1]
+		camplane_z = self.camvect
+		camplane_x = cross(camplane_y, camplane_z)
 
+		self.pixelperunit = 200
+		self.projection=[];self.nodedistance=[];self.prjsc=[]
+		tang_of_angle=[]
 		for i in range(len(self.nodes)):
 			for j in range(3):
 				self.nodes[i][j]=float(self.nodes[i][j])
+			self.nodedistance.append(magnitude([self.nodes[i][0]-self.campos[0],self.nodes[i][1]-self.campos[1],self.nodes[i][2]-self.campos[2]]))
+			self.projection.append(transform_axes([0, 0, 0], self.campos, camplane_x, camplane_y, camplane_z, self.nodes[i],1))
+			self.prjsc.append([self.projection[i][0]*self.pixelperunit+FrameWidth/2,
+										  -self.projection[i][1]*self.pixelperunit+FrameHeight/2,
+										  self.projection[i][2]])
 
-		tempx=[];tempy=[];tempz=[]
-		projection=[]
-		for i in range(len(self.nodes)):
-			tempx.append(float(self.nodes[i][0])-self.camposx)
-			tempy.append(float(self.nodes[i][1])-self.camposy)
-			tempz.append(float(self.nodes[i][2])-self.camposz)
-			projection.append(project_on_plane(self.nodes[i][0],self.nodes[i][1],self.nodes[i][2],self.camposx,self.camposy,self.camposz,self.camvectx,self.camvecty,self.camvectz,self.cam_localxvector))
+#		print(self.projection)
+#		print(self.prjsc)
+#		self.cam_localxvector=cross([self.camvectx,self.camvecty,self.camvectz],[0,0,1])
 
-		self.node_vectx   = tempx
-		self.node_vecty = tempy
-		self.node_vectz = tempz
-		self.projection = projection
+#		tempx=[];tempy=[];tempz=[]
+#		projection=[]
+#		for i in range(len(self.nodes)):
+#			tempx.append(float(self.nodes[i][0])-self.camposx)
+#			tempy.append(float(self.nodes[i][1])-self.camposy)
+#			tempz.append(float(self.nodes[i][2])-self.camposz)
+#			projection.append(project_on_plane(self.nodes[i][0],self.nodes[i][1],self.nodes[i][2],self.camposx,self.camposy,self.camposz,self.camvectx,self.camvecty,self.camvectz,self.cam_localxvector))
+
+#		self.node_vectx   = tempx
+#		self.node_vecty = tempy
+#		self.node_vectz = tempz
+#		self.projection = projection
 
 #		print(projection)
 		nodenums=len(self.nodes)
@@ -104,22 +116,20 @@ class Shape(pygame.sprite.Sprite):
 			x2 = (self.nodes[i * 3][1] + self.nodes[i * 3 + 1][1] + self.nodes[i * 3 + 2][1])/3
 			x3 = (self.nodes[i * 3][2] + self.nodes[i * 3 + 1][2] + self.nodes[i * 3 + 2][2])/3
 			self.surf_cents.append([x1,x2,x3])
-			light_vect1.append(x1 - self.lightx)
-			light_vect2.append(x2 - self.lighty)
-			light_vect3.append(x3 - self.lightz)
+			light_vect1.append(x1 - self.light[0])
+			light_vect2.append(x2 - self.light[1])
+			light_vect3.append(x3 - self.light[2])
 			light_vect=[light_vect1[0],light_vect2[0],light_vect3[0]]
-#			print(light_vect)
 			light_angle_temp=dot_product(light_vect,self.normals[i])/vect_size(light_vect)/vect_size(self.normals[i])
 			light_angle.append(light_angle_temp)
 			light_absangle.append(abs(light_angle_temp))
 
-			view_vect1.append(self.surf_cents[i][0] - self.camposx)
-			view_vect2.append(self.surf_cents[i][1] - self.camposy)
-			view_vect3.append(self.surf_cents[i][2] - self.camposz)
+			view_vect1.append(self.surf_cents[i][0] - self.campos[0])
+			view_vect2.append(self.surf_cents[i][1] - self.campos[1])
+			view_vect3.append(self.surf_cents[i][2] - self.campos[2])
 			view_vect = [view_vect1[0], view_vect2[0], view_vect3[0]]
-			distance.append(vect_size(view_vect))
-			view_angle_temp = dot_product(view_vect, self.normals[i]) / distance[-1] / vect_size(
-				self.normals[i])
+			distance.append(magnitude(view_vect))
+			view_angle_temp = dot_product(view_vect, self.normals[i]) / distance[-1] / vect_size(self.normals[i])
 			view_angle.append(view_angle_temp)
 
 		### Needs update to include change in normals.
@@ -129,16 +139,19 @@ class Shape(pygame.sprite.Sprite):
 #		print(min(view_angle))
 #		print(max(view_angle))
 
-		xmax=0;ymax=0;zmax=0
-		xmin = 0;ymin = 0;zmin = 0
-		for i in range(len(projection)):
-			xmax = max(xmax,projection[i][0])
-			ymax = max(ymax, projection[i][1])
-			xmin = min(xmin,projection[i][0])
-			ymin = min(ymin, projection[i][1])
+#		xmax=0;ymax=0
+#		xmin = 0;ymin = 0
+#		for i in range(len(projection)):
+#			xmax = max(xmax,projection[i][0])
+#			ymax = max(ymax, projection[i][1])
+#			xmin = min(xmin,projection[i][0])
+#			ymin = min(ymin, projection[i][1])
 
-		max_size=max(abs(xmax),abs(ymax),abs(xmin),abs(ymin))
-		diff_from_desired=(max_size-FrameWidth)/FrameWidth
+#		print(xmax);print(ymax)
+#		print(xmin);print(ymin)
+
+#		max_size=max(abs(xmax),abs(ymax),abs(xmin),abs(ymin))
+#		diff_from_desired=(max_size-FrameWidth)/FrameWidth
 #		self.factor=(1-diff_from_desired)*self.factor
 
 		draw_indices=list(range(0, int(nodenums/3)-1))
@@ -146,12 +159,21 @@ class Shape(pygame.sprite.Sprite):
 
 #		for i in range(int(nodenums/3)):
 		for i in draw_indices:
-			self.projection[i][0] = self.projection[i][0] * self.pixelperunit
-			self.projection[i][1]= self.projection[i][1] * self.pixelperunit
-#			if self.view_angle[i] < 0:
-			pygame.draw.polygon(screen, (light_absangle[i]*250,0,0), [[self.projection[i*3][0], self.projection[i*3][1]],
-												  [self.projection[i*3+1][0], self.projection[i*3+1][1]],
-												  [self.projection[i*3+2][0], self.projection[i*3+2][1]]], 0)
+#			self.projection[i*3][0] = (self.projection[i*3][0] * self.pixelperunit)
+#			self.projection[i*3][1] = (self.projection[i*3][1] * self.pixelperunit)
+#			self.projection[i*3+1][0] = (self.projection[i*3+1][0] * self.pixelperunit)
+#			self.projection[i*3+1][1] = (self.projection[i*3+1][1] * self.pixelperunit)
+#			self.projection[i*3+2][0] = (self.projection[i*3+2][0] * self.pixelperunit)
+#			self.projection[i*3+2][1] = (self.projection[i*3+2][1] * self.pixelperunit)
+
+#			pygame.draw.polygon(screen, (light_absangle[i]*250,0,0), [[self.projection[i*3][0], self.projection[i*3][1]],
+#												  [self.projection[i*3+1][0], self.projection[i*3+1][1]],
+#												  [self.projection[i*3+2][0], self.projection[i*3+2][1]]], 0)
+
+			pygame.draw.polygon(screen, (light_absangle[i] * 250, 0, 0), [
+				[self.prjsc[i * 3][0], self.prjsc[i * 3][1]],
+				[self.prjsc[i * 3 + 1][0], self.prjsc[i * 3 + 1][1]],
+				[self.prjsc[i * 3 + 2][0], self.prjsc[i * 3 + 2][1]]], 1)
 
 #			pygame.draw.line(screen, (0, 0, 0), (self.projection[i*3][0], self.projection[i*3][1]),
 #							 (self.projection[i*3+1][0], self.projection[i*3+1][1]), width=4)
@@ -163,13 +185,12 @@ class Shape(pygame.sprite.Sprite):
 			pygame.draw.line(screen, (250, 250, 250), (100, FrameWidth/2), (100, 100), width=2)
 			pygame.draw.line(screen, (250, 250, 250), (100, 100), (FrameHeight/2,100), width=2)
 
-		print(self.projection)
-		sys.exit()
+#		print(self.projection)
+#		sys.exit()
 
 		self.collision_num = 0
 
 	def user_input(self):
-
 		angle_constant=0.10
 		keys = pygame.key.get_pressed()
 		if keys[pygame.K_UP]:
@@ -197,9 +218,32 @@ class Shape(pygame.sprite.Sprite):
 				temp1,temp2 = rotate_around_axis(self.nodes[i][0], self.nodes[i][1], -1*angle_constant)
 				self.nodes[i]=[temp1,temp2,self.nodes[i][2]]
 
+	def user_input_player_moving(self):
+		self.movconst = 200
+		self.angconst = 0.01
+		keys = pygame.key.get_pressed()
+		if keys[pygame.K_UP]:
+			self.campos = [self.campos[0]+ self.camvect[0] * self.movconst,
+						   self.campos[1]+ self.camvect[1] * self.movconst,
+						   self.campos[2]+ self.camvect[2] * self.movconst]
+#			self.pixelperunit+=1
+		elif keys[pygame.K_DOWN]:
+			self.campos = [self.campos[0]- self.camvect[0] * self.movconst,
+						   self.campos[1]- self.camvect[1] * self.movconst,
+						   self.campos[2]- self.camvect[2] * self.movconst]
+#			self.pixelperunit-=1
+#			print(self.campos)
+		elif keys[pygame.K_RIGHT]:
+			temp1,temp2 = rotate_around_axis(self.camvect[0], self.camvect[1], self.angconst)
+			self.camvect=[temp1,temp2,self.camvect[2]]
+		elif keys[pygame.K_LEFT]:
+			temp1,temp2 = rotate_around_axis(self.camvect[0], self.camvect[1], -self.angconst)
+			self.camvect=[temp1,temp2,self.camvect[2]]
+
 	def update(self):
-		self.calculations_for_aribit()
-		self.user_input()
+		self.calculations_for_arbit()
+		self.user_input_player_moving()
+#		self.user_input()
 
 class Ball(pygame.sprite.Sprite):
 	def __init__(self):
@@ -265,6 +309,28 @@ class Racket(pygame.sprite.Sprite):
 	def update(self,type):
 		self.type = type
 		self.player_input()
+
+def normalize(v):
+    vmag = magnitude(v)
+    return [v[i]/vmag  for i in range(3)]
+
+def magnitude(v):
+    return math.sqrt(sum(v[i]*v[i] for i in range(3)))
+
+def transform_axes(o1,o2,vx1,vx2,vx3,p1,factor):
+	temp=[o1[0]-o2[0]+p1[0],o1[1]-o2[1]+p1[1],o1[2]-o2[2]+p1[2]]
+	m_t=[[vx1[0],vx2[0],vx3[0]],[vx1[1],vx2[1],vx3[1]],[vx1[2],vx2[2],vx3[2]]]
+	p2x = (m_t[0][0] * temp[0] + m_t[1][0] * temp[1] + m_t[2][0] * temp[2])
+	p2y = (m_t[0][1] * temp[0] + m_t[1][1] * temp[1] + m_t[2][1] * temp[2])
+	p2z = (m_t[0][2] * temp[0] + m_t[1][2] * temp[1] + m_t[2][2] * temp[2])
+	planar_mag=magnitude([p2x, p2y, 0])
+	tang_of_angle=0.1+planar_mag/(abs(p2z))
+	if tang_of_angle > 5:
+		tang_of_angle=5
+#	for i in range(3):
+#		p2.append(m_t[0][i] * temp[0] + m_t[1][i] * temp[1] + m_t[2][i] * temp[2])
+	return [p2x*tang_of_angle*factor,p2y*tang_of_angle*factor,p2z]
+#	return [p2x*factor,p2y*factor,p2z]
 
 def display_score():
 #	current_time = int(pygame.time.get_ticks() / 1000) - start_time
