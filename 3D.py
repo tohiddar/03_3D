@@ -56,14 +56,14 @@ class Shape(pygame.sprite.Sprite):
 		self.factor=1
 
 		### Camera Initial Location
-		self.campos=[100,100,0]
+		self.campos=[0,200,0]
 
 		### Camera Initial Vector (Could be non_normalized)
-		self.camvect = [-1,-1,0]
+		self.camvect = [0,-1,0]
 		self.camvect=normalize(self.camvect)
 
 		### Light Source Location
-		self.light = [10,10,10]
+		self.light = [200,200,200]
 
 		### Tangent of half of the angle of field of view (70 deg = 2.74747741945)
 		self.tangtheta=2.74747741945
@@ -74,7 +74,7 @@ class Shape(pygame.sprite.Sprite):
 		camplane_z = self.camvect
 		camplane_x = cross(camplane_y, camplane_z)
 
-		self.pixelperunit = 200
+		self.pixelperunit = 20
 		self.projection=[];self.nodedistance=[];self.prjsc=[]
 		tang_of_angle=[]
 		for i in range(len(self.nodes)):
@@ -86,24 +86,6 @@ class Shape(pygame.sprite.Sprite):
 										  -self.projection[i][1]*self.pixelperunit+FrameHeight/2,
 										  self.projection[i][2]])
 
-#		print(self.projection)
-#		print(self.prjsc)
-#		self.cam_localxvector=cross([self.camvectx,self.camvecty,self.camvectz],[0,0,1])
-
-#		tempx=[];tempy=[];tempz=[]
-#		projection=[]
-#		for i in range(len(self.nodes)):
-#			tempx.append(float(self.nodes[i][0])-self.camposx)
-#			tempy.append(float(self.nodes[i][1])-self.camposy)
-#			tempz.append(float(self.nodes[i][2])-self.camposz)
-#			projection.append(project_on_plane(self.nodes[i][0],self.nodes[i][1],self.nodes[i][2],self.camposx,self.camposy,self.camposz,self.camvectx,self.camvecty,self.camvectz,self.cam_localxvector))
-
-#		self.node_vectx   = tempx
-#		self.node_vecty = tempy
-#		self.node_vectz = tempz
-#		self.projection = projection
-
-#		print(projection)
 		nodenums=len(self.nodes)
 
 		self.surf_cents=[]
@@ -136,56 +118,19 @@ class Shape(pygame.sprite.Sprite):
 		self.view_angle=view_angle
 		self.distance=distance
 
-#		print(min(view_angle))
-#		print(max(view_angle))
-
-#		xmax=0;ymax=0
-#		xmin = 0;ymin = 0
-#		for i in range(len(projection)):
-#			xmax = max(xmax,projection[i][0])
-#			ymax = max(ymax, projection[i][1])
-#			xmin = min(xmin,projection[i][0])
-#			ymin = min(ymin, projection[i][1])
-
-#		print(xmax);print(ymax)
-#		print(xmin);print(ymin)
-
-#		max_size=max(abs(xmax),abs(ymax),abs(xmin),abs(ymin))
-#		diff_from_desired=(max_size-FrameWidth)/FrameWidth
-#		self.factor=(1-diff_from_desired)*self.factor
-
 		draw_indices=list(range(0, int(nodenums/3)-1))
 		draw_indices=[x for _, x in sorted(zip(self.distance, draw_indices),reverse=True)]
 
-#		for i in range(int(nodenums/3)):
 		for i in draw_indices:
-#			self.projection[i*3][0] = (self.projection[i*3][0] * self.pixelperunit)
-#			self.projection[i*3][1] = (self.projection[i*3][1] * self.pixelperunit)
-#			self.projection[i*3+1][0] = (self.projection[i*3+1][0] * self.pixelperunit)
-#			self.projection[i*3+1][1] = (self.projection[i*3+1][1] * self.pixelperunit)
-#			self.projection[i*3+2][0] = (self.projection[i*3+2][0] * self.pixelperunit)
-#			self.projection[i*3+2][1] = (self.projection[i*3+2][1] * self.pixelperunit)
-
-#			pygame.draw.polygon(screen, (light_absangle[i]*250,0,0), [[self.projection[i*3][0], self.projection[i*3][1]],
-#												  [self.projection[i*3+1][0], self.projection[i*3+1][1]],
-#												  [self.projection[i*3+2][0], self.projection[i*3+2][1]]], 0)
 
 			pygame.draw.polygon(screen, (light_absangle[i] * 250, 0, 0), [
 				[self.prjsc[i * 3][0], self.prjsc[i * 3][1]],
 				[self.prjsc[i * 3 + 1][0], self.prjsc[i * 3 + 1][1]],
 				[self.prjsc[i * 3 + 2][0], self.prjsc[i * 3 + 2][1]]], 1)
 
-#			pygame.draw.line(screen, (0, 0, 0), (self.projection[i*3][0], self.projection[i*3][1]),
-#							 (self.projection[i*3+1][0], self.projection[i*3+1][1]), width=4)
-#			pygame.draw.line(screen, (0, 0, 0), (self.projection[i*3][0], self.projection[i*3][1]),
-#							 (self.projection[i*3+2][0], self.projection[i*3+2][1]), width=4)
-#			pygame.draw.line(screen, (0, 0, 0), (self.projection[i*3+2][0], self.projection[i*3+2][1]),
-#							 (self.projection[i*3+1][0], self.projection[i*3+1][1]), width=4)
+			pygame.draw.line(screen, (250, 250, 250), (FrameWidth/2, FrameHeight/2), (FrameWidth/2+100, FrameHeight/2), width=2)
+			pygame.draw.line(screen, (250, 250, 250), (FrameWidth/2, FrameHeight/2), (FrameWidth/2, FrameHeight/2+100), width=2)
 
-			pygame.draw.line(screen, (250, 250, 250), (100, FrameWidth/2), (100, 100), width=2)
-			pygame.draw.line(screen, (250, 250, 250), (100, 100), (FrameHeight/2,100), width=2)
-
-#		print(self.projection)
 #		sys.exit()
 
 		self.collision_num = 0
@@ -219,7 +164,7 @@ class Shape(pygame.sprite.Sprite):
 				self.nodes[i]=[temp1,temp2,self.nodes[i][2]]
 
 	def user_input_player_moving(self):
-		self.movconst = 200
+		self.movconst = 2
 		self.angconst = 0.01
 		keys = pygame.key.get_pressed()
 		if keys[pygame.K_UP]:
@@ -324,9 +269,15 @@ def transform_axes(o1,o2,vx1,vx2,vx3,p1,factor):
 	p2y = (m_t[0][1] * temp[0] + m_t[1][1] * temp[1] + m_t[2][1] * temp[2])
 	p2z = (m_t[0][2] * temp[0] + m_t[1][2] * temp[1] + m_t[2][2] * temp[2])
 	planar_mag=magnitude([p2x, p2y, 0])
-	tang_of_angle=0.1+planar_mag/(abs(p2z))
-	if tang_of_angle > 5:
-		tang_of_angle=5
+	distance=magnitude([p2x, p2y, p2z])
+	print(distance)
+	factor=1
+#	tang_of_angle=factor+abs((planar_mag)/(abs(p2z)))
+	tang_of_angle=planar_mag/(distance+1e-6)*factor
+	if tang_of_angle>0.5:
+		print(tang_of_angle)
+#	if tang_of_angle > 0.1:
+#		tang_of_angle=0.1
 #	for i in range(3):
 #		p2.append(m_t[0][i] * temp[0] + m_t[1][i] * temp[1] + m_t[2][i] * temp[2])
 	return [p2x*tang_of_angle*factor,p2y*tang_of_angle*factor,p2z]
