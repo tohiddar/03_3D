@@ -16,9 +16,11 @@ class Shape(pygame.sprite.Sprite):
 		temp2=[];temp20=[]
 #		with open('Eiffel_tower_sample.STL', newline='') as file:
 #		with open('humanoid.stl', newline='') as file:
-		with open('bottle.stl', newline='') as file:
+#		with open('bottle.stl', newline='') as file:
 #		with open('surface.stl', newline='') as file:
-#		with open('cube.stl', newline='') as file:
+		with open('cube.stl', newline='') as file:
+#		with open('longroom.stl', newline='') as file:
+#		with open('ground.stl', newline='') as file:
 #		with open('teapot.stl', newline='') as file:
 			for line in file:
 #				print(line)
@@ -56,10 +58,12 @@ class Shape(pygame.sprite.Sprite):
 		self.factor=1
 
 		### Camera Initial Location
-		self.campos=[0,200,0]
+#		self.campos=[0,200,0]
+		self.campos = [0.5, 0, 0.5]
 
 		### Camera Initial Vector (Could be non_normalized)
-		self.camvect = [0,-1,0]
+#		self.camvect = [0,-1,0]
+		self.camvect = [0, 1, 0]
 		self.camvect=normalize(self.camvect)
 
 		### Light Source Location
@@ -74,7 +78,7 @@ class Shape(pygame.sprite.Sprite):
 		camplane_z = self.camvect
 		camplane_x = cross(camplane_y, camplane_z)
 
-		self.pixelperunit = 20
+		self.pixelperunit = 300
 		self.projection=[];self.nodedistance=[];self.prjsc=[]
 		tang_of_angle=[]
 		for i in range(len(self.nodes)):
@@ -87,6 +91,8 @@ class Shape(pygame.sprite.Sprite):
 										  self.projection[i][2]])
 
 		nodenums=len(self.nodes)
+#		print(self.nodedistance[0])
+#		print(self.prjsc[2])
 
 		self.surf_cents=[]
 		light_vect1=[];light_vect2=[];light_vect3=[]
@@ -118,11 +124,14 @@ class Shape(pygame.sprite.Sprite):
 		self.view_angle=view_angle
 		self.distance=distance
 
-		draw_indices=list(range(0, int(nodenums/3)-1))
+#		draw_indices=list(range(0, int(nodenums/3)-1))
+		draw_indices = list(range(0, int(nodenums / 3)))
 		draw_indices=[x for _, x in sorted(zip(self.distance, draw_indices),reverse=True)]
+#		print(list(range(0, int(nodenums/3))))
+#		print(nodenums)
 
 		for i in draw_indices:
-
+#			while self.prjsc[i][2]>-2:
 			pygame.draw.polygon(screen, (light_absangle[i] * 250, 0, 0), [
 				[self.prjsc[i * 3][0], self.prjsc[i * 3][1]],
 				[self.prjsc[i * 3 + 1][0], self.prjsc[i * 3 + 1][1]],
@@ -164,7 +173,7 @@ class Shape(pygame.sprite.Sprite):
 				self.nodes[i]=[temp1,temp2,self.nodes[i][2]]
 
 	def user_input_player_moving(self):
-		self.movconst = 2
+		self.movconst = 0.2
 		self.angconst = 0.01
 		keys = pygame.key.get_pressed()
 		if keys[pygame.K_UP]:
@@ -270,12 +279,18 @@ def transform_axes(o1,o2,vx1,vx2,vx3,p1,factor):
 	p2z = (m_t[0][2] * temp[0] + m_t[1][2] * temp[1] + m_t[2][2] * temp[2])
 	planar_mag=magnitude([p2x, p2y, 0])
 	distance=magnitude([p2x, p2y, p2z])
-	print(distance)
+#	print(distance)
 	factor=1
 #	tang_of_angle=factor+abs((planar_mag)/(abs(p2z)))
-	tang_of_angle=planar_mag/(distance+1e-6)*factor
-	if tang_of_angle>0.5:
-		print(tang_of_angle)
+#	tang_of_angle=(0.1+planar_mag)/(distance+1e-6)/math.copysign(1, p2z)
+#	tang_of_angle = (0.1 + planar_mag) / (distance + 1e-6)
+	tang_of_angle = (0.1 + planar_mag) /(distance)
+#	tang_of_angle = (0.1 + planar_mag) / distance*(1-math.copysign(1, p2z)*distance)
+#	tang_of_angle = (0.1 + planar_mag) / (p2z+1e-20)
+#	https: // gabrielgambetta.com / computer - graphics - from-scratch / 10 - describing - and -rendering - a - scene.html
+	print(tang_of_angle)
+#	if tang_of_angle>0.5:
+#		print(tang_of_angle)
 #	if tang_of_angle > 0.1:
 #		tang_of_angle=0.1
 #	for i in range(3):
